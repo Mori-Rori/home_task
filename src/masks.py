@@ -13,6 +13,7 @@
 
 
 
+
  def get_mask_account(account_number):
      # Удаляем лишние пробелы, если они есть
      account_number = account_number.replace(" ", "")
@@ -25,3 +26,7 @@
      masked_number = "**" + account_number[-4:]
 
      return masked_number
+
+
+
+
