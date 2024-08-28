@@ -1,50 +1,34 @@
-def get_mask_card_number(card_number: str) -> str:
-    # Проверяем, что длина номера карты соответствует ожидаемой
-    if len(card_number) != 16:
-        raise ValueError("Номер карты должен содержать 16 цифр")
-
-    # Формируем маску
-    masked_number = f"XXXX XX{card_number[6:8]} **** XXXX"
-    return masked_number
-
-
-def get_mask_account_number(account_number: str) -> str:
-    # Проверяем, что длина номера счета соответствует ожидаемой
-    if len(account_number) != 20:
-        raise ValueError("Номер счета должен содержать 20 цифр")
-
-    # Формируем маску (например, 10 символов открытых, остальные закрыты)
-    masked_number = f"{account_number[:10]} **** ****"
-    return masked_number
-
-
-def get_masked_info(info: str) -> str:
-    # Разделяем строку на слова
-    parts = info.split()
-
-    # Первый элемент - тип, остальные - номер
-    card_type = parts[0]
-    number = ''.join(parts[1:])  # Объединяем остальные части в номер
-
-    # Проверяем тип карты и применяем соответствующую маскировку
-    if card_type in ["Visa", "Maestro"]:
-        return get_mask_card_number(number)
-    elif card_type == "Счет":
-        return get_mask_account_number(number)
-    else:
-        raise ValueError("Неизвестный тип карты или счета")
-
-
+from src.masks import get_mask_card_number, get_mask_account  # забираем обе
 
 
 from datetime import datetime
 
 
+def mask_account_card(info: str) -> str:
+    """ возвращает входящую строку -  счет/карту с замаскированным ногмером """
+    # Разделяем строку на слова
+    parts = info.split()
+    number = ''.join(parts[-1])
+    if parts[0].lower() == 'счет':
+        # Маскируем номер счета
+        masked_number = get_mask_account(number)  # используем импортированную функцию
+        return f"{parts[0]} {masked_number} "
+    else:
+        # Маскируем номер карты
+        masked_number = get_mask_card_number(number)  # используем импортированную функцию
+        return f"{' '.join(parts[:-1])} {masked_number} "
+
+
 def get_date(date_str: str) -> str:
-    # Преобразуем строку в объект datetime
+    """Преобразуем строку в объект datetime"""
     date_obj = datetime.fromisoformat(date_str)
 
     # Форматируем дату в нужный формат
     formatted_date = date_obj.strftime("%d.%m.%Y")
 
     return formatted_date
+
+
+if __name__ == '__main__':
+    print(mask_account_card("Счет 12345678901234567890"))  # должны увидеть в терминале: Счет **7890
+    print(mask_account_card("Visa Classic 1234567890123456"))  # should see в терминале:VisaClassic 1234 56** **** 3456
