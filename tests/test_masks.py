@@ -1,38 +1,42 @@
-from src.masks import get_mask_card_number
+import pytest
+from src.masks import get_mask_card_number, get_mask_account
 
 
-def test_get_mask_card_number():
-    # Тестирование валидных номеров карт
-    assert get_mask_card_number("4000 1234 5678 9010") == "4000 12** **** 9010"
-    assert get_mask_card_number("1234 5678 9012 3456") == "1234 56** **** 3456"
-    assert get_mask_card_number("4000123456789010") == "4000 12** **** 9010"
-    assert get_mask_card_number(" 4000 1234 5678 9010  ") == "4000 12** **** 9010"
-
-    # Тестирование неправильной длины номера карты
-    try:
-        get_mask_card_number("1234 5678 9012")
-    except ValueError:
-        pass
-    else:
-        assert False, "Expected ValueError for short card number not raised."
-
-    try:
-        get_mask_card_number("1234 5678 9012 34567")
-    except ValueError:
-        pass
-    else:
-        assert False, "Expected ValueError for long card number not raised."
-
-    # Тестирование недопустимых символов
-    try:
-        get_mask_card_number("4000 1234 ABCD 9010")
-    except ValueError:
-        pass
-    else:
-        assert False, "Expected ValueError for invalid characters not raised."
+@pytest.mark.parametrize(
+    'test_input, expected',
+    (
+            ("7000792289606361", "7000 79** **** 6361"),
+            ("9213882192018312", "9213 88** **** 8312"),
+    )
+)
+def test_get_mask_card_number(test_input, expected):
+    assert get_mask_card_number(test_input) == expected
 
 
-# Запуск тестов
-if __name__ == "__main__":
-    test_get_mask_card_number()
-    print("All tests passed!")
+@pytest.mark.parametrize(
+    'test_input, expected',
+    (
+            ("123456789", "6789"),
+            ("9876543210", "3210"),
+            ("   1234   ", "1234"),  # Пробелы вокруг
+            ("1234 5678 9012", "9012"),  # Пробелы внутри
+
+    )
+)
+def test_get_mask_account(test_input, expected):
+    assert get_mask_account(test_input) == expected
+
+
+@pytest.mark.parametrize(
+    'test_input, expected_message',
+    (
+            ("123", 'Номер счета должен содержать не менее 4 цифр.'),
+            ("", 'Номер счета должен содержать не менее 4 цифр.'),
+            ("   ", 'Номер счета должен содержать не менее 4 цифр.'),
+            ("12", 'Номер счета должен содержать не менее 4 цифр.'),
+    )
+)
+def test_get_mask_account_exceptions(test_input, expected_message):
+    with pytest.raises(ValueError) as exc_info:
+        get_mask_account(test_input)
+    assert str(exc_info.value) == expected_message
